@@ -7,13 +7,13 @@
 
 ## Comandos utilizados
 
-```bash
+
 dotnet new sln --name Solution
 dotnet new console --output Project
 dotnet sln add Project
 dotnet build
 dotnet run
-```
+
 
 ---
 
@@ -23,23 +23,26 @@ dotnet run
 ```
 SumRec(1) = 1
 SumRec(n) = n + SumRec(n - 1)
+
+De manera iterativa
 ```
-**De manera iterativa**
+
 
 ### Respuesta
 Podemos convertir esa definición recursiva a una versión iterativa usando un bucle que acumule la suma.
 
-**Pseudocódigo**
-```
+Pseudocódigo
+
 función SumRecIter(n):
     suma ← 0
     para i ← 1 hasta n:
         suma ← suma + i
     retornar suma
-```
+
 
 **Ejemplo en Python**
-```python
+
+python
 def SumRecIter(n):
     suma = 0
     for i in range(1, n + 1):
@@ -47,10 +50,10 @@ def SumRecIter(n):
     return suma
 
 print(SumRecIter(5))  # Salida: 15 (1+2+3+4+5)
-```
+
 
 **Ejemplo en Java**
-```java
+java
 int SumRecIter(int n) {
     int suma = 0;
     for (int i = 1; i <= n; i++) {
@@ -58,7 +61,7 @@ int SumRecIter(int n) {
     }
     return suma;
 }
-```
+
 
 ---
 
