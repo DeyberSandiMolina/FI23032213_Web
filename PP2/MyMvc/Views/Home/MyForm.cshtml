@@ -1,0 +1,21 @@
+@model MyBinary
+
+<h2>Operaciones Binarias</h2>
+
+<form asp-controller="Home" asp-action="MyForm" method="post">
+    <div>
+        <label for="a">a:</label>
+        <input asp-for="a" />
+        <span asp-validation-for="a"></span>
+    </div>
+    <div>
+        <label for="b">b:</label>
+        <input asp-for="b" />
+        <span asp-validation-for="b"></span>
+    </div>
+    <button type="submit">Calcular</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,68 @@
+@{
+    ViewData["Title"] = "Resultados";
+}
+
+<h2>Resultados</h2>
+
+<table border="1" style="border-collapse: collapse; width: 100%;">
+    <thead>
+        <tr>
+            <th style="padding: 8px; text-align: left;">Operación</th>
+            <th style="padding: 8px; text-align: center;">Bin</th>
+            <th style="padding: 8px; text-align: center;">Oct</th>
+            <th style="padding: 8px; text-align: center;">Dec</th>
+            <th style="padding: 8px; text-align: center;">Hex</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 8px;">a</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.A.Binary</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.A.Octal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.A.Decimal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.A.Hex</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px;">b</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.B.Binary</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.B.Octal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.B.Decimal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.B.Hex</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px;">a AND b</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.AND.Binary</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.AND.Octal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.AND.Decimal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.AND.Hex</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px;">a OR b</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.OR.Binary</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.OR.Octal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.OR.Decimal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.OR.Hex</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px;">a XOR b</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.XOR.Binary</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.XOR.Octal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.XOR.Decimal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.XOR.Hex</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px;">a + b</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.Sum.Binary</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.Sum.Octal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.Sum.Decimal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.Sum.Hex</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px;">a * b</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.Product.Binary</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.Product.Octal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.Product.Decimal</td>
+            <td style="padding: 8px; text-align: center;">@ViewBag.Product.Hex</td>
+        </tr>
+    </tbody>
+</table>
