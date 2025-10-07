@@ -32,11 +32,5 @@ public class MyBinary
     public string? Octal { get; set; }
     public string? Decimal { get; set; }
     public string? Hex { get; set; }
-    /*public SolutionResult A { get; set; }
-    public SolutionResult B { get; set; }
-    public SolutionResult And { get; set; }
-    public SolutionResult Or { get; set; }
-    public SolutionResult Xor { get; set; }
-    public SolutionResult Sum { get; set; }
-    public SolutionResult Product { get; set; }*/
+
 }

@@ -34,23 +34,23 @@ public class HomeController : Controller
         }
         else { 
 
-        // Normalizar a 8 bits
+
         string a8 = model.a.PadLeft(8, '0');
         string b8 = model.b.PadLeft(8, '0');
 
         int decA = Convert.ToInt32(model.a, 2);
         int decB = Convert.ToInt32(model.b, 2);
 
-        // Operaciones binarias
+  
         string andBin = new string(a8.Zip(b8, (x, y) => (x == '1' && y == '1') ? '1' : '0').ToArray());
         string orBin = new string(a8.Zip(b8, (x, y) => (x == '1' || y == '1') ? '1' : '0').ToArray());
         string xorBin = new string(a8.Zip(b8, (x, y) => (x != y) ? '1' : '0').ToArray());
 
-        // Operaciones aritméticas
+     
         int sum = decA + decB;
         int product = decA * decB;
 
-        // Enviar todo a la vista usando ViewBag
+       
         ViewBag.A = ToAllBases(decA, a8);
         ViewBag.B = ToAllBases(decB, b8);
         ViewBag.AND = ToAllBases(Convert.ToInt32(andBin, 2), andBin);
