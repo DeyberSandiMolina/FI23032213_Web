@@ -8,7 +8,7 @@
 ## Comandos de dotnet utilizados (CLI)
 
 - `dotnet new sln -n MySolution`
-- `dotnet new webapu -o MinimalApi`
+- `dotnet new webapi -o MinimalApi`
 - `dotnet sln add MinimalApi\`
 
 ## Prompts (consultas y respuestas) de los chatbots de IA (Copilot, Gemini, ChatGPT, etc.) utilizados
