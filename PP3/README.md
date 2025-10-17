@@ -46,4 +46,5 @@ foreach (var word in words)
 
 - **Pregunta:** ¿Qué ventajas y desventajas observa con el Minimal API si se compara con la opción de utilizar Controllers?
 
-  **Respuesta:** En sí la mayor diferencia que puedo ver es que casi todo se hace desde el program.cs, lo cual puede ser una ventaja para cosas pequeñas, ya que se tiene todo junto, pero si se utilizara para cosas muy grandes, presentaría un gran desorde, a diferencia de usar controllers específicos para cada tarea que se necesite.
+  **Respuesta:** 
+  - En sí la mayor diferencia que puedo ver es que casi todo se hace desde el program.cs, lo cual puede ser una ventaja para cosas pequeñas, ya que se tiene todo junto, pero si se utilizara para cosas muy grandes, presentaría un gran desorde, a diferencia de usar controllers específicos para cada tarea que se necesite.
