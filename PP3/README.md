@@ -17,22 +17,27 @@
   
   **Respuesta:** En una Minimal API con .NET 8.0 (C#), para recorrer un string palabra por palabra usando el espacio como separador, lo más común y directo es usar el método:
 
-  - `Split(' ')`
+  ```csharp
+  Split(' ')
+    ```
 
 O mejor aún, si quieres evitar espacios vacíos entre palabras (por ejemplo, si hay más de un espacio seguido), usas:
 
-- `Split(' ', StringSplitOptions.RemoveEmptyEntries)`
+```csharp
+Split(' ', StringSplitOptions.RemoveEmptyEntries)
+  ```
 
 Ejemplo completo:
+```csharp
+var text = "This  is   a   test";
+var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-- var text = "This  is   a   test";
-- var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-- foreach (var word in words)
-- {
--     Console.WriteLine(word);
-- }
-
+foreach (var word in words)
+{
+    Console.WriteLine(word);
+}
+  ```
+## Respuestas a preguntas
 
 - **Pregunta:** ¿Es posible enviar valores en el Body (por ejemplo, en el Form) del Request de tipo GET?
 
