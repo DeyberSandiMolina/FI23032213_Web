@@ -280,10 +280,10 @@ namespace QuixoWeb.Application.Services
                                     engine.WinnerPlayerPublic.Value == 3) ? 1 : 2;
                     }
                     
-                    // **IMPORTANTE**: Usar .Value porque ya verificamos que HasValue es true
+                    
                     await _repo.EndGameAsync(
                         gameId,
-                        engine.WinnerPlayerPublic.Value, // ← .Value aquí
+                        engine.WinnerPlayerPublic.Value, 
                         winnerTeam,
                         duration
                     );
