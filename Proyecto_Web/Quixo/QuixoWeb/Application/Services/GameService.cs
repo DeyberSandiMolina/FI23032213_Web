@@ -298,7 +298,7 @@ namespace QuixoWeb.Application.Services
                     {
                         GameEngine.MoveResult.Valid => "Movimiento válido.",
                         GameEngine.MoveResult.Win => "¡Victoria!",
-                        // **CORREGIDO**: Cambiar este mensaje
+                        
                         GameEngine.MoveResult.LoseAccidental => "¡Has perdido por completar una línea para el oponente!",
                         _ => "Movimiento realizado."
                     },
