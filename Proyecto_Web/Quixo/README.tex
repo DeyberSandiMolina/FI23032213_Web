@@ -1,0 +1,563 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes, arrows}
+\usepackage[margin=2.5cm]{geometry}
+
+\title{Quixo Web - Proyecto Final}
+\author{Deyber Sandi Molina \\ FI23032213}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\textbf{Proyecto individual desarrollado para el curso de Programación Web}
+\end{center}
+
+\section*{Información del Estudiante}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Campo} & \textbf{Información} \\
+\hline
+Nombre completo & Deyber Sandi Molina \\
+Carné & FI23032213 \\
+Correo institucional & dsandi30398@ufide.ac.cr \\
+Usuario Git & DeyberSandiMolina \\
+\hline
+\end{tabular}
+\end{table}
+
+\section*{Información del Proyecto}
+
+\subsection*{Frameworks y Herramientas Utilizadas}
+\begin{itemize}
+    \item \textbf{Backend:} ASP.NET Core 8.0
+    \item \textbf{Frontend:} HTML5, CSS3, JavaScript (Vanilla)
+    \item \textbf{Base de Datos:} SQLite (Entity Framework Core)
+    \item \textbf{ORM:} Entity Framework Core 8.0
+    \item \textbf{IDE:} Visual Studio 2022 / Visual Studio Code
+    \item \textbf{Gestión de Paquetes:} NuGet
+    \item \textbf{Control de Versiones:} GitHub
+    \item \textbf{Sistema Operativo:} Windows 11
+\end{itemize}
+
+\subsection*{Tipo de Aplicación}
+\textbf{MPA (Multi-Page Application)} - Aplicación web tradicional con múltiples páginas HTML implementada con ASP.NET Core MVC.
+
+\subsection*{Arquitectura}
+\textbf{MVC (Model-View-Controller)} con separación de responsabilidades:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    node distance=1cm,
+    block/.style={rectangle, draw=black, thick, minimum width=3cm, minimum height=1cm, text centered, rounded corners},
+    arrow/.style={->, >=stealth, thick}
+]
+
+\node[block, fill=blue!20] (controller) {Controladores};
+\node[block, fill=green!20, below=of controller] (services) {Servicios};
+\node[block, fill=red!20, below left=of services] (models) {Modelos};
+\node[block, fill=yellow!20, below right=of services] (views) {Vistas};
+\node[block, fill=purple!20, below=of services] (repository) {Repositorios};
+\node[block, fill=orange!20, below=of repository] (database) {Base de Datos};
+
+\draw[arrow] (controller) -- node[right] {Solicitudes} (services);
+\draw[arrow] (services) -- node[left] {Datos} (models);
+\draw[arrow] (services) -- node[right] {DTOs} (views);
+\draw[arrow] (services) -- node[right] {Operaciones CRUD} (repository);
+\draw[arrow] (repository) -- node[right] {Consultas SQL} (database);
+\draw[arrow] (views) -- node[above] {Respuesta HTML} (controller);
+\draw[arrow] (models) -- node[below] {Mapeo} (repository);
+
+\end{tikzpicture}
+\caption{Arquitectura MVC del proyecto Quixo Web}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=1.5cm and 1.5cm,
+    table/.style={
+        rectangle,
+        draw=black,
+        thick,
+        minimum width=4cm,
+        minimum height=2cm,
+        text centered,
+        fill=blue!10,
+        rounded corners=5pt
+    },
+    pk/.style={fill=yellow!30},
+    fk/.style={fill=green!30}
+]
+
+% ========== GAMES ENTITY ==========
+\node[table, pk] (games) at (0,0) {
+    \textbf{GAMES} \\
+    \scriptsize GameId (PK) \\
+    \scriptsize Mode (2=2J, 4=4J) \\
+    \scriptsize CreatedAt \\
+    \scriptsize EndedAt \\
+    \scriptsize TotalTime \\
+    \scriptsize WinnerPlayerId (FK) \\
+    \scriptsize WinnerTeamId (FK)
+};
+
+% ========== PLAYERS ENTITY ==========
+\node[table, pk] (players) at (-5,-4) {
+    \textbf{PLAYERS} \\
+    \scriptsize PlayerId (PK) \\
+    \scriptsize Name \\
+    \scriptsize PlayerOrder \\
+    \scriptsize GameId (FK) \\
+    \scriptsize TeamId (FK)
+};
+
+% ========== TEAMS ENTITY ==========
+\node[table, pk] (teams) at (5,-4) {
+    \textbf{TEAMS} \\
+    \scriptsize TeamId (PK) \\
+    \scriptsize Name \\
+    \scriptsize GameId (FK) \\
+    \scriptsize Player1Id (FK) \\
+    \scriptsize Player2Id (FK) \\
+    \scriptsize GamesWon
+};
+
+% ========== MOVES ENTITY ==========
+\node[table, pk] (moves) at (-2.5,-8) {
+    \textbf{MOVES} \\
+    \scriptsize MoveId (PK) \\
+    \scriptsize GameId (FK) \\
+    \scriptsize PlayerId (FK) \\
+    \scriptsize TurnNumber \\
+    \scriptsize CubeTakenRow (0-4) \\
+    \scriptsize CubeTakenCol (0-4) \\
+    \scriptsize CubePlacedRow (0-4) \\
+    \scriptsize CubePlacedCol (0-4) \\
+    \scriptsize Symbol (X/O) \\
+    \scriptsize DotDirection (0-3)
+};
+
+% ========== BOARDSTATES ENTITY ==========
+\node[table, pk] (boardstates) at (2.5,-8) {
+    \textbf{BOARDSTATES} \\
+    \scriptsize BoardStateId (PK) \\
+    \scriptsize GameId (FK) \\
+    \scriptsize MoveId (FK) \\
+    \scriptsize TurnNumber \\
+    \scriptsize StateJson \\
+    \scriptsize CreatedAt
+};
+
+% ========== RELACIONES CORREGIDAS ==========
+% Game → Players (1:N)
+\draw[->, thick, blue] (games.south west) -- node[left, font=\scriptsize, pos=0.7] {1} (players.north);
+\draw[<-, thick, blue] (players.north) -- node[right, font=\scriptsize, pos=0.3] {N} (games.south west);
+
+% Game → Teams (1:N)
+\draw[->, thick, red] (games.south east) -- node[right, font=\scriptsize, pos=0.7] {1} (teams.north);
+\draw[<-, thick, red] (teams.north) -- node[left, font=\scriptsize, pos=0.3] {N} (games.south east);
+
+% Team → Players (1:2)
+\draw[<->, thick, green!60!black, dashed] (teams.south) -- node[left, font=\scriptsize] {1} (players.east);
+\draw[<->, thick, green!60!black, dashed] (players.east) -- node[right, font=\scriptsize] {2} (teams.south);
+
+% Game → Moves (1:N)
+\draw[->, thick, purple] (games.south) -- node[left, font=\scriptsize, pos=0.7] {1} (moves.north);
+\draw[<-, thick, purple] (moves.north) -- node[right, font=\scriptsize, pos=0.3] {N} (games.south);
+
+% Player → Moves (1:N)
+\draw[->, thick, orange] (players.south) -- node[left, font=\scriptsize, pos=0.7] {1} (moves.west);
+\draw[<-, thick, orange] (moves.west) -- node[right, font=\scriptsize, pos=0.3] {N} (players.south);
+
+% Game → BoardStates (1:N)
+\draw[->, thick, brown] (games.south) -- node[right, font=\scriptsize, pos=0.7] {1} (boardstates.north);
+\draw[<-, thick, brown] (boardstates.north) -- node[left, font=\scriptsize, pos=0.3] {N} (games.south);
+
+% Move → BoardState (0:1)
+\draw[<->, thick, gray, dashed] (moves.east) -- node[above, font=\scriptsize] {0..1} (boardstates.west);
+
+% Game → WinnerPlayer (1:1)
+\draw[->, thick, cyan, dashed] (games) -- ++(0,1.5) -| node[above, font=\scriptsize] {ganador} (players);
+
+% Game → WinnerTeam (1:1)
+\draw[->, thick, magenta, dashed] (games) -- ++(0,1.5) -| node[above, font=\scriptsize] {ganador} (teams);
+
+\end{tikzpicture}
+}
+\end{figure}
+
+\subsection*{Especificaciones de Tablas}
+
+\subsubsection*{Games (Juegos)}
+\begin{tabular}{|l|l|l|p{7.5cm}|}
+\hline
+\textbf{Columna} & \textbf{Tipo} & \textbf{Restricción} & \textbf{Descripción} \\
+\hline
+GameId & INT & PRIMARY KEY & Identificador único del juego \\
+Mode & INT & NOT NULL, CHECK (2,4) & Modo: 2=2 jugadores, 4=4 jugadores \\
+CreatedAt & DATETIME & NOT NULL & Fecha y hora de creación \\
+EndedAt & DATETIME & NULLABLE & Fecha y hora de finalización \\
+TotalTime & TIME & NOT NULL & Duración total de la partida \\
+WinnerPlayerId & INT & NULLABLE, FK & ID del jugador ganador (modo 2J) \\
+WinnerTeamId & INT & NULLABLE, FK & ID del equipo ganador (modo 4J) \\
+\hline
+\end{tabular}
+
+\subsubsection*{Players (Jugadores)}
+\begin{tabular}{|l|l|l|p{7.5cm}|}
+\hline
+\textbf{Columna} & \textbf{Tipo} & \textbf{Restricción} & \textbf{Descripción} \\
+\hline
+PlayerId & INT & PRIMARY KEY & Identificador único del jugador \\
+Name & VARCHAR(50) & NOT NULL & Nombre del jugador \\
+PlayerOrder & INT & NOT NULL, CHECK (1-4) & Orden de turno: 1,2,3,4 \\
+GameId & INT & FOREIGN KEY NOT NULL & Juego al que pertenece \\
+TeamId & INT & FOREIGN KEY NULLABLE & Equipo asignado (solo modo 4J) \\
+\hline
+\end{tabular}
+
+\subsubsection*{Teams (Equipos)}
+\begin{tabular}{|l|l|l|p{7.5cm}|}
+\hline
+\textbf{Columna} & \textbf{Tipo} & \textbf{Restricción} & \textbf{Descripción} \\
+\hline
+TeamId & INT & PRIMARY KEY & Identificador único del equipo \\
+Name & VARCHAR(50) & NOT NULL & Nombre del equipo (ej: "Equipo A") \\
+GameId & INT & FOREIGN KEY NOT NULL & Juego al que pertenece \\
+Player1Id & INT & FOREIGN KEY NOT NULL & Primer jugador del equipo \\
+Player2Id & INT & FOREIGN KEY NOT NULL & Segundo jugador del equipo \\
+GamesWon & INT & DEFAULT 0 & Número de partidas ganadas \\
+\hline
+\end{tabular}
+
+\subsubsection*{Moves (Movimientos)}
+\begin{tabular}{|l|l|l|p{7.5cm}|}
+\hline
+\textbf{Columna} & \textbf{Tipo} & \textbf{Restricción} & \textbf{Descripción} \\
+\hline
+MoveId & INT & PRIMARY KEY & Identificador único del movimiento \\
+GameId & INT & FOREIGN KEY NOT NULL & Juego al que pertenece \\
+PlayerId & INT & FOREIGN KEY NULLABLE & Jugador que realizó el movimiento \\
+TurnNumber & INT & NOT NULL, CHECK (>0) & Número de turno en la partida \\
+CubeTakenRow & INT & NOT NULL, CHECK (0-4) & Fila del cubo tomado \\
+CubeTakenCol & INT & NOT NULL, CHECK (0-4) & Columna del cubo tomado \\
+CubePlacedRow & INT & NOT NULL, CHECK (0-4) & Fila donde se coloca el cubo \\
+CubePlacedCol & INT & NOT NULL, CHECK (0-4) & Columna donde se coloca el cubo \\
+Symbol & CHAR(1) & NOT NULL, CHECK (X,O) & Símbolo: 'X' o 'O' \\
+DotDirection & INT & NULLABLE, CHECK (0-3) & Orientación del punto (0-3) modo 4J \\
+\hline
+\end{tabular}
+
+\subsubsection*{BoardStates (Estados del Tablero)}
+\begin{tabular}{|l|l|l|p{7.5cm}|}
+\hline
+\textbf{Columna} & \textbf{Tipo} & \textbf{Restricción} & \textbf{Descripción} \\
+\hline
+BoardStateId & INT & PRIMARY KEY & Identificador único del estado \\
+GameId & INT & FOREIGN KEY NOT NULL & Referencia al juego \\
+MoveId & INT & FOREIGN KEY NULLABLE & Movimiento asociado (opcional) \\
+TurnNumber & INT & NOT NULL & Número de turno correspondiente \\
+StateJson & TEXT & NOT NULL & Estado completo del tablero en JSON \\
+CreatedAt & DATETIME & NOT NULL & Fecha y hora del estado \\
+\hline
+\end{tabular}
+
+\subsection*{Relaciones y Cardinalidades Corregidas}
+
+\begin{itemize}
+    \item \textbf{Games → Players (1:N):} Un juego tiene múltiples jugadores (2 o 4)
+    \item \textbf{Games → Teams (1:N):} Un juego tiene múltiples equipos (0 o 2)
+    \item \textbf{Teams → Players (1:2):} Un equipo tiene exactamente 2 jugadores
+    \item \textbf{Games → Moves (1:N):} Un juego tiene múltiples movimientos
+    \item \textbf{Players → Moves (1:N):} Un jugador realiza múltiples movimientos
+    \item \textbf{Games → BoardStates (1:N):} Un juego tiene múltiples estados de tablero
+    \item \textbf{Moves → BoardStates (0:1):} Un movimiento puede tener un estado asociado
+    \item \textbf{Games → WinnerPlayer (1:1):} Relación opcional para jugador ganador
+    \item \textbf{Games → WinnerTeam (1:1):} Relación opcional para equipo ganador
+\end{itemize}
+
+\subsection*{Restricciones de Integridad}
+\begin{itemize}
+    \item \textbf{Modo consistente:} Si Mode=2, Teams debe estar vacío
+    \item \textbf{Modo consistente:} Si Mode=4, cada Team debe tener Player1Id y Player2Id
+    \item \textbf{Unicidad:} PlayerOrder único por GameId
+    \item \textbf{Validación:} Coordenadas entre 0-4 para el tablero 5x5
+    \item \textbf{Validación:} Símbolos solo 'X' o 'O'
+\end{itemize}
+
+\section*{Referencias y Recursos Utilizados}
+
+\subsection*{Documentación Oficial}
+\begin{itemize}
+    \item \textbf{ASP.NET Core Documentation:} \url{https://docs.microsoft.com/aspnet/core}
+    \item \textbf{Entity Framework Core Documentation:} \url{https://docs.microsoft.com/ef/core}
+    \item \textbf{SQLite Documentation:} \url{https://www.sqlite.org/docs.html}
+    \item \textbf{Bootstrap 5 Documentation:} \url{https://getbootstrap.com/docs/5.0}
+\end{itemize}
+
+\subsection*{Tutoriales y Guías}
+\begin{itemize}
+    \item \textbf{Build a Web App with ASP.NET Core MVC:} \url{https://learn.microsoft.com/training/paths/aspnet-core-web-app}
+    \item \textbf{Getting Started with EF Core:} \url{https://learn.microsoft.com/ef/core/get-started/overview/first-app}
+    \item \textbf{JavaScript DOM Manipulation:} \url{https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model}
+    \item \textbf{SQLite with .NET:} \url{https://learn.microsoft.com/dotnet/standard/data/sqlite}
+\end{itemize}
+
+\subsection*{Stack Overflow - Consultas Resueltas}
+\begin{itemize}
+    \item \textbf{Relaciones en Entity Framework Core:} Problemas con claves foráneas y relaciones uno-a-muchos
+    \item \textbf{Manejo de sesiones en ASP.NET Core:} Cómo mantener estado entre peticiones
+    \item \textbf{JavaScript para juegos de tablero:} Implementación de lógica de juego en cliente
+    \item \textbf{Exportación a XML en C\#:} Generación de archivos XML desde objetos
+\end{itemize}
+
+\section*{Uso de Asistentes de IA}
+
+\subsection*{DeepSeek - Asistencia en Desarrollo}
+Durante el desarrollo del proyecto, se utilizó el asistente de IA DeepSeek para resolver problemas específicos y optimizar código:
+
+\begin{verbatim}
+Prompts principales utilizados:
+
+1. "Ayuda con el diseño de base de datos para un juego que soporte 
+   tanto modo 2 jugadores como modo 4 jugadores con equipos"
+
+2. "Problema con Entity Framework Core: las relaciones no se 
+   persisten correctamente en SQLite"
+
+3. "Cómo crear un reloj de 7 segmentos en JavaScript para mostrar 
+   el tiempo transcurrido en la partida"
+
+4. "Exportar datos de juego a formato XML en ASP.NET Core MVC"
+
+\end{verbatim}
+
+\subsection*{Código Generado con Asistencia de IA}
+\begin{itemize}
+    \item \textbf{QuixoRepository.cs:} Patrón Repository para acceso a datos
+    \item \textbf{HistoryController.cs:} Controlador para historial y exportación
+    \item \textbf{StatsController.cs:} Controlador para estadísticas
+    \item \textbf{JavaScript del reloj 7 segmentos:} Visualización de tiempo
+\end{itemize}
+
+\section*{Instrucciones de Instalación y Ejecución}
+
+\subsection*{Requisitos del Sistema}
+\begin{itemize}
+    \item \textbf{Sistema Operativo:} Windows 10/11, macOS, o Linux
+    \item \textbf{.NET SDK:} Versión 8.0 o superior
+    \item \textbf{Editor de Código:} Visual Studio 2022, VS Code, o similar
+    \item \textbf{Navegador Web:} Chrome, Firefox, Edge (versiones recientes)
+    \item \textbf{Memoria RAM:} Mínimo 4GB (recomendado 8GB)
+    \item \textbf{Espacio en disco:} 500MB libres
+\end{itemize}
+
+\subsection*{Instalación Paso a Paso}
+
+\begin{enumerate}
+    \item \textbf{Clonar el repositorio:}
+    \begin{verbatim}
+    git clone https://github.com/DeyberSandiMolina/FI23032213_Web.git
+    cd Proyecto/QuixoWeb
+    \end{verbatim}
+    
+    \item \textbf{Verificar instalación de .NET:}
+    \begin{verbatim}
+    dotnet --version
+    # Debe mostrar 8.0.x o superior
+    \end{verbatim}
+    
+    \item \textbf{Restaurar dependencias:}
+    \begin{verbatim}
+    dotnet restore
+    \end{verbatim}
+    
+    \item \textbf{Configurar base de datos:}
+    \begin{verbatim}
+    dotnet ef database update
+    # O simplemente ejecutar la aplicación (se crea automáticamente)
+    \end{verbatim}
+\end{enumerate}
+
+\subsection*{Compilación}
+\begin{verbatim}
+dotnet build
+\end{verbatim}
+
+\subsection*{Ejecución}
+\begin{verbatim}
+dotnet run
+\end{verbatim}
+
+\noindent La aplicación estará disponible en: \url{http://localhost:5267}
+
+\subsection*{Estructura del Proyecto}
+\begin{verbatim}
+QuixoWeb/
+├── Controllers/           # Controladores ASP.NET Core
+│   ├── GameController.cs      # Control del juego
+│   ├── HistoryController.cs   # Historial y exportación
+│   ├── StatsController.cs     # Estadísticas
+│   └── HomeController.cs      # Página principal
+├── Models/                # Entidades de EF Core
+│   ├── Game.cs               # Entidad Juego
+│   ├── Move.cs               # Entidad Movimiento
+│   ├── Player.cs             # Entidad Jugador
+│   ├── Team.cs               # Entidad Equipo
+│   └── BoardState.cs         # Estado del tablero
+├── Views/                 # Vistas Razor
+│   ├── Game/
+│   │   ├── State.cshtml      # Vista del juego
+│   │   └── Create.cshtml     # Crear juego
+│   ├── History/
+│   │   ├── Index.cshtml      # Lista de partidas
+│   │   └── ViewGame.cshtml   # Ver partida específica
+│   ├── Stats/
+│   │   └── Index.cshtml      # Estadísticas
+│   └── Home/
+│       └── Index.cshtml      # Página principal
+├── Services/              # Lógica de negocio
+│   └── GameService.cs        # Servicio principal
+├── Data/                  # Acceso a datos
+│   ├── Repositories/
+│   │   └── QuixoRepository.cs # Patrón Repository
+│   └── QuixoDbContext.cs     # Contexto de BD
+├── Domain/                # Dominio del juego
+│   └── GameEngine.cs         # Motor del juego
+├── Application/           # Capa de aplicación
+│   └── DTOs/                 # Data Transfer Objects
+├── wwwroot/              # Archivos estáticos
+│   ├── css/                  # Estilos CSS
+│   └── js/                   # JavaScript
+├── Properties/           # Configuraciones
+├── appsettings.json     # Configuración aplicación
+├── Program.cs           # Punto de entrada
+├── QuixoWeb.csproj      # Archivo proyecto
+├── README.tex           # Este documento
+├── README.pdf           # PDF generado
+└── README.md            # README para GitHub
+\end{verbatim}
+
+\section*{Pruebas y Verificación}
+
+\subsection*{Pruebas de Funcionalidad}
+\begin{enumerate}
+    \item \textbf{Creación de juego:}
+    \begin{itemize}
+        \item Acceder a \url{http://localhost:5267}
+        \item Click en "Jugar una partida nueva"
+        \item Seleccionar modo 2 o 4 jugadores
+        \item Verificar que se crea correctamente
+    \end{itemize}
+    
+    \item \textbf{Juego básico:}
+    \begin{itemize}
+        \item Realizar movimientos válidos
+        \item Verificar que se alternan turnos
+        \item Comprobar que el reloj funciona
+        \item Intentar movimientos inválidos (deben rechazarse)
+    \end{itemize}
+    
+    \item \textbf{Detección de ganador:}
+    \begin{itemize}
+        \item Completar una línea de 5 símbolos
+        \item Verificar que se muestra mensaje de victoria
+        \item Comprobar que se deshabilita el tablero
+    \end{itemize}
+    
+    \item \textbf{Historial:}
+    \begin{itemize}
+        \item Ir a "Partidas finalizadas"
+        \item Ver lista de juegos completados
+        \item Click en "Ver" para una partida
+        \item Navegar con botones anterior/siguiente
+        \item Verificar que muestra cada movimiento
+    \end{itemize}
+    
+    \item \textbf{Exportación:}
+    \begin{itemize}
+        \item En historial, click en "Exportar XML"
+        \item Verificar que se descarga archivo .xml
+        \item Abrir archivo y comprobar formato
+    \end{itemize}
+    
+    \item \textbf{Estadísticas:}
+    \begin{itemize}
+        \item Ir a "Estadísticas"
+        \item Ver tablas de efectividad
+        \item Comprobar que los cálculos son correctos
+    \end{itemize}
+\end{enumerate}
+
+\subsection*{Casos de Prueba Específicos}
+\begin{itemize}
+    \item \textbf{Caso 1:} Modo 2 jugadores, victoria normal
+    \item \textbf{Caso 2:} Modo 2 jugadores, derrota accidental
+    \item \textbf{Caso 3:} Modo 4 jugadores, juego completo
+    \item \textbf{Caso 4:} Exportación de partida con muchos movimientos
+    \item \textbf{Caso 5:} Estadísticas después de múltiples partidas
+\end{itemize}
+
+\section*{Características Implementadas}
+
+\subsection*{Completadas ✅}
+\begin{itemize}
+    \item \textbf{Juego básico:} Tablero 5x5, movimientos válidos
+    \item \textbf{Dos modos:} 2 jugadores y 4 jugadores (equipos)
+    \item \textbf{Detección de ganador:} Horizontal, vertical, diagonal
+    \item \textbf{Historial completo:} Lista de todas las partidas
+    \item \textbf{Navegación por movimientos:} Ver partida turno por turno
+    \item \textbf{Reloj 7 segmentos:} Tiempo real y en historial
+    \item \textbf{Estadísticas:} Efectividad de jugadores/equipos
+    \item \textbf{Exportación XML:} Guardar partida completa
+    \item \textbf{Base de datos:} Persistencia SQLite
+    \item \textbf{Interfaz responsiva:} Funciona en móviles y desktop
+\end{itemize}
+
+\subsection*{Características Avanzadas}
+\begin{itemize}
+    \item \textbf{Validación en tiempo real:} Movimientos inválidos bloqueados
+    \item \textbf{Estado en memoria:} Juegos activos cargados dinámicamente
+    \item \textbf{Reconstrucción de partidas:} Recargar cualquier partida desde BD
+    \item \textbf{Cálculo automático:} Tiempos, estadísticas, efectividad
+    \item \textbf{Mensajes descriptivos:} Feedback claro al usuario
+\end{itemize}
+
+\section*{Aprendizajes y Conclusiones}
+
+\subsection*{Aprendizajes Técnicos}
+\begin{itemize}
+    \item \textbf{ASP.NET Core MVC:} Arquitectura completa de aplicaciones web
+    \item \textbf{Entity Framework Core:} ORM y manejo de bases de datos
+    \item \textbf{SQLite:} Base de datos embebida para aplicaciones .NET
+    \item \textbf{JavaScript avanzado:} Manipulación DOM, eventos, temporizadores
+    \item \textbf{Patrones de diseño:} Repository, Service, DTO, MVC
+    \item \textbf{Testing y debugging:} Depuración de aplicaciones web complejas
+\end{itemize}
+
+\subsection*{Conclusiones}
+El proyecto Quixo Web demuestra la capacidad para desarrollar una aplicación web completa utilizando tecnologías modernas. Se logró implementar todas las funcionalidades requeridas, con especial atención a la experiencia de usuario y robustez del sistema. La aplicación es escalable, mantenible y sigue las mejores prácticas de desarrollo web.
+
+\subsection*{Posibles Mejoras Futuras}
+\begin{itemize}
+    \item \textbf{Autenticación de usuarios:} Sistema de login/registro
+    \item \textbf{Juego en línea:} Multiplayer en tiempo real con SignalR
+    \item \textbf{IA para oponente:} Implementar algoritmos para jugar contra computadora
+    \item \textbf{App móvil:} Versión nativa usando .NET MAUI
+    \item \textbf{Más estadísticas:} Gráficos avanzados, tendencias
+\end{itemize}
+
+\end{document}

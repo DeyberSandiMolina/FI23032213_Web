@@ -1,0 +1,94 @@
+@using QuixoWeb.Application.DTOs
+@{
+    ViewData["Title"] = "Estadísticas";
+    var playerStats = ViewBag.PlayerStats as List<PlayerStatsDto>;
+    var teamStats = ViewBag.TeamStats as List<TeamStatsDto>;
+}
+
+<div class="container mt-4">
+    <h2>Estadísticas</h2>
+    
+    <!-- Estadísticas para 2 jugadores -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Modo para Dos Jugadores</h4>
+        </div>
+        <div class="card-body">
+            @if (playerStats != null && playerStats.Any())
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Jugador</th>
+                            <th>Efectividad</th>
+                            <th>Ganadas</th>
+                            <th>Jugadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var stat in playerStats)
+                        {
+                            <tr>
+                                <td>@stat.Name</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: @Math.Min(100, stat.Effectiveness)%"></div>
+                                    </div>
+                                    @stat.Effectiveness.ToString("F1") %
+                                </td>
+                                <td>@stat.GamesWon</td>
+                                <td>@stat.GamesPlayed</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted">No hay estadísticas disponibles para el modo 2 jugadores.</p>
+            }
+        </div>
+    </div>
+    
+    <!-- Estadísticas para 4 jugadores -->
+    <div class="card">
+        <div class="card-header">
+            <h4>Modo para Cuatro Jugadores (Equipos)</h4>
+        </div>
+        <div class="card-body">
+            @if (teamStats != null && teamStats.Any())
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Efectividad</th>
+                            <th>Ganadas</th>
+                            <th>Jugadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var stat in teamStats)
+                        {
+                            <tr>
+                                <td>@stat.Name</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: @Math.Min(100, stat.Effectiveness)%"></div>
+                                    </div>
+                                    @stat.Effectiveness.ToString("F1") %
+                                </td>
+                                <td>@stat.GamesWon</td>
+                                <td>@stat.GamesPlayed</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted">No hay estadísticas disponibles para el modo 4 jugadores.</p>
+            }
+        </div>
+    </div>
+</div>

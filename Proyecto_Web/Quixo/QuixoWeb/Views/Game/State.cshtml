@@ -1,0 +1,858 @@
+@model QuixoWeb.Application.DTOs.GameStateDto
+@{
+    ViewData["Title"] = "Game State";
+    var gameId = ViewBag.GameId;
+    var isFourPlayerMode = ViewBag.IsFourPlayerMode ?? false; // Necesitamos pasar esto del controlador
+}
+
+<style>
+.board {
+    display: grid;
+    grid-template-columns: repeat(5, 70px);
+    grid-template-rows: repeat(5, 70px);
+    gap: 6px;
+    margin: 20px auto;
+    position: relative;
+}
+.cell {
+    width: 70px;
+    height: 70px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    transition: 0.2s;
+    border: 2px solid transparent;
+    position: relative;
+}
+.cell:hover { background: #e4e4e4; }
+
+.selected { border: 3px solid #007bff !important; background: #dceaff !important; }
+.highlight-selectable { border: 3px solid #28a745 !important; }
+.highlight-target { border: 3px dashed #ff9900 !important; }
+
+.circle { color: #007bff; }
+.cross { color: #d9534f; }
+.neutral { color: #999; }
+
+/* Indicador de punto para modo 4 jugadores */
+.dot-indicator {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #ff5722;
+    border-radius: 50%;
+    display: none;
+}
+.dot-up { top: 5px; left: 50%; transform: translateX(-50%); }
+.dot-right { top: 50%; right: 5px; transform: translateY(-50%); }
+.dot-down { bottom: 5px; left: 50%; transform: translateX(-50%); }
+.dot-left { top: 50%; left: 5px; transform: translateY(-50%); }
+
+/* Paneles de jugadores */
+.player-panel {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background: #f2f2f2;
+    min-width: 160px;
+}
+.player-active {
+    border-color: #28a745;
+    background: #eaffea;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.7);
+}
+.team-a { border-left: 5px solid #007bff; }
+.team-b { border-left: 5px solid #d9534f; }
+
+/* Layout para 4 jugadores */
+.four-players-container {
+    display: grid;
+    grid-template-areas:
+        ". top ."
+        "left board right"
+        ". bottom .";
+    grid-template-columns: 180px 1fr 180px;
+    grid-template-rows: auto 1fr auto;
+    align-items: center;
+    justify-items: center;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.two-players-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+.player-top { grid-area: top; }
+.player-bottom { grid-area: bottom; }
+.player-left { grid-area: left; transform: rotate(-90deg); }
+.player-right { grid-area: right; transform: rotate(90deg); }
+.board-area { grid-area: board; }
+
+/* SEVEN SEGMENT CLOCK */
+.seven-seg-clock {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin: 15px auto;
+}
+.digit { position: relative; width: 28px; height: 50px; }
+.digit div {
+    position: absolute;
+    background: #222;
+    transition: background 0.2s;
+}
+.separator {
+    font-size: 40px;
+    color: #3aff00;
+    margin: 0 4px;
+}
+.seg-on { background: #3aff00 !important; }
+
+.seg-a { top: 0; left: 4px; width: 20px; height: 6px; }
+.seg-b { top: 4px; right: 0; width: 6px; height: 20px; }
+.seg-c { bottom: 4px; right: 0; width: 6px; height: 20px; }
+.seg-d { bottom: 0; left: 4px; width: 20px; height: 6px; }
+.seg-e { bottom: 4px; left: 0; width: 6px; height: 20px; }
+.seg-f { top: 4px; left: 0; width: 6px; height: 20px; }
+.seg-g { top: 22px; left: 4px; width: 20px; height: 6px; }
+
+/* Modal de orientación */
+.orientation-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+.orientation-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    width: 300px;
+}
+.orientation-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 20px 0;
+}
+.orient-btn {
+    padding: 15px;
+    font-size: 24px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.orient-btn:hover {
+    background: #f0f0f0;
+    border-color: #007bff;
+}
+</style>
+
+<!-- MODAL DE ORIENTACIÓN (para modo 4 jugadores) -->
+<div id="orientationModal" class="orientation-modal">
+    <div class="orientation-content">
+        <h4>Selecciona la orientación del punto</h4>
+        <p>¿Hacia qué jugador debe apuntar el punto?</p>
+        
+        <div class="orientation-buttons">
+            <button class="orient-btn" data-orient="0">↑<br>Jugador 1</button>
+            <button class="orient-btn" data-orient="1">→<br>Jugador 2</button>
+            <button class="orient-btn" data-orient="2">↓<br>Jugador 3</button>
+            <button class="orient-btn" data-orient="3">←<br>Jugador 4</button>
+        </div>
+        
+        <button id="cancelOrient" class="btn btn-secondary">Cancelar</button>
+    </div>
+</div>
+
+<!-- MODAL DE FIN DE PARTIDA -->
+<div id="gameOverModal" class="orientation-modal">
+    <div class="orientation-content">
+        <h3 id="winnerText">Partida finalizada</h3>
+        
+        <div class="mt-4">
+            <button onclick="restartGame()" class="btn btn-success">
+                Jugar de nuevo
+            </button>
+            <button onclick="goToHistory()" class="btn btn-primary">
+                Historial
+            </button>
+        </div>
+    </div>
+</div>
+
+<h2 class="text-center">Quixo Game - @(isFourPlayerMode ? "4 Jugadores" : "2 Jugadores")</h2>
+
+<!-- RELOJ DE 7 SEGMENTOS -->
+<div id="clock" class="seven-seg-clock">
+    <div class="digit" id="d0"></div>
+    <div class="digit" id="d1"></div>
+    <div class="separator">:</div>
+    <div class="digit" id="d2"></div>
+    <div class="digit" id="d3"></div>
+    <div class="separator">:</div>
+    <div class="digit" id="d4"></div>
+    <div class="digit" id="d5"></div>
+</div>
+
+@if (isFourPlayerMode)
+{
+    <!-- LAYOUT PARA 4 JUGADORES -->
+    <div class="four-players-container">
+        <!-- Jugador 1 (Arriba, Equipo A) -->
+        <div id="player1Panel" class="player-panel player-top team-a">
+            Jugador 1 — O<br><small>Equipo A</small>
+        </div>
+        
+        <!-- Jugador 4 (Izquierda, Equipo B) -->
+        <div id="player4Panel" class="player-panel player-left team-b">
+            Jugador 4 — X<br><small>Equipo B</small>
+        </div>
+        
+        <!-- TABLERO -->
+        <div class="board-area">
+            <div class="panel text-center mb-2">
+                <strong>Turno actual:</strong>
+                <span id="currentPlayer"></span>
+                <br>
+                <small id="teamInfo"></small>
+            </div>
+            
+            <div class="board" id="board">
+                @for (int r = 0; r < Model.Board.Count; r++)
+                {
+                    var row = Model.Board[r];
+                    for (int c = 0; c < row.Cells.Count; c++)
+                    {
+                        var cell = row.Cells[c];
+                        string cssClass = cell.Symbol switch { 1 => "circle", 2 => "cross", _ => "neutral" };
+                        string chr = cell.Symbol switch { 1 => "O", 2 => "X", _ => "-" };
+                        string dotClass = GetDotClass(cell.Orientation);
+                        
+                        <div class="cell @cssClass"
+                             data-row="@r"
+                             data-col="@c"
+                             data-symbol="@cell.Symbol"
+                             data-orientation="@cell.Orientation">
+                            @chr
+                            @if (cell.Symbol != 0)
+                            {
+                                <div class="dot-indicator @dotClass"></div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        
+        <!-- Jugador 2 (Derecha, Equipo B) -->
+        <div id="player2Panel" class="player-panel player-right team-b">
+            Jugador 2 — X<br><small>Equipo B</small>
+        </div>
+        
+        <!-- Jugador 3 (Abajo, Equipo A) -->
+        <div id="player3Panel" class="player-panel player-bottom team-a">
+            Jugador 3 — O<br><small>Equipo A</small>
+        </div>
+    </div>
+}
+else
+{
+    <!-- LAYOUT PARA 2 JUGADORES -->
+    <div class="two-players-container">
+        <!-- Jugador 1 -->
+        <div id="player1Panel" class="player-panel mb-3">
+            Jugador 1 — O
+        </div>
+        
+        <div class="panel text-center mb-2">
+            <strong>Turno actual:</strong>
+            <span id="currentPlayer"></span>
+        </div>
+        
+        <!-- TABLERO -->
+        <div class="board" id="board">
+            @for (int r = 0; r < Model.Board.Count; r++)
+            {
+                var row = Model.Board[r];
+                for (int c = 0; c < row.Cells.Count; c++)
+                {
+                    var cell = row.Cells[c];
+                    string cssClass = cell.Symbol switch { 1 => "circle", 2 => "cross", _ => "neutral" };
+                    string chr = cell.Symbol switch { 1 => "O", 2 => "X", _ => "-" };
+                    
+                    <div class="cell @cssClass"
+                         data-row="@r"
+                         data-col="@c"
+                         data-symbol="@cell.Symbol">
+                        @chr
+                    </div>
+                }
+            }
+        </div>
+        
+        <!-- Jugador 2 -->
+        <div id="player2Panel" class="player-panel mt-3">
+            Jugador 2 — X
+        </div>
+    </div>
+}
+
+<div class="text-center mt-4">
+    <button class="btn btn-danger" onclick="restartGame()">Reiniciar partida</button>
+    <a href="/Home/Index" class="btn btn-secondary">Menú principal</a>
+</div>
+
+@functions {
+    private string GetDotClass(int orientation)
+    {
+        return orientation switch
+        {
+            0 => "dot-up",
+            1 => "dot-right",
+            2 => "dot-down",
+            3 => "dot-left",
+            _ => "dot-up"
+        };
+    }
+}
+
+
+<script>
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
+let globalCurrentSymbol = parseInt("@Model.CurrentSymbol");
+let globalCurrentPlayer = parseInt("@Model.CurrentPlayer");
+let isFourPlayerMode = @(isFourPlayerMode ? "true" : "false");
+let currentGameId = @ViewBag.GameId;
+let takePos = null;
+let gameOver = @Html.Raw(Model.IsGameOver ? "true" : "false");
+let winnerPlayer = @(Model.WinnerPlayer.HasValue ? Model.WinnerPlayer.Value : 0);
+let timerInterval = null;
+let timerSeconds = 0;
+let selectedOrientation = null;
+
+// ============================================
+// FUNCIONES HELPER
+// ============================================
+function calculateCurrentTurn() {
+    const totalCells = 25;
+    const neutralCells = document.querySelectorAll('.cell[data-symbol="0"]').length;
+    const occupiedCells = totalCells - neutralCells;
+    return occupiedCells + 1;
+}
+
+function isFirstRoundGame() {
+    const turnNumber = calculateCurrentTurn();
+    return isFourPlayerMode ? (turnNumber <= 4) : (turnNumber <= 2);
+}
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("=== PÁGINA CARGADA ===");
+    console.log("Estado inicial:", {
+        currentPlayer: @Model.CurrentPlayer,
+        currentSymbol: @Model.CurrentSymbol,
+        isFourPlayerMode: isFourPlayerMode,
+        gameId: currentGameId
+    });
+    
+    // Mantener las variables como están
+    globalCurrentSymbol = @Model.CurrentSymbol;
+    globalCurrentPlayer = @Model.CurrentPlayer; // Aunque no lo usaremos mucho
+    
+    console.log(`Símbolo inicial: ${globalCurrentSymbol} (${globalCurrentSymbol === 1 ? 'O' : 'X'})`);
+    
+    initClock();
+    updatePlayerPanels(); // ← Esta se ejecutará basada en el símbolo
+    attachClicks();
+    
+    if (isFourPlayerMode) {
+        showDots();
+    }
+    
+    if (gameOver) {
+        disableBoard();
+        clearInterval(timerInterval);
+        showWinnerModal();
+    } else {
+        startTimer();
+    }
+});
+
+/* --------------------------------------
+   ACTUALIZAR PANELES DE JUGADORES
+----------------------------------------*/
+function updatePlayerPanels() {
+    console.log("=== updatePlayerPanels ===");
+    console.log(`Símbolo actual: ${globalCurrentSymbol} (${globalCurrentSymbol === 1 ? 'O' : 'X'})`);
+    
+    // En modo 2J: O = Jugador 1, X = Jugador 2
+    const jugadorActual = globalCurrentSymbol === 1 ? 1 : 2;
+    const simboloLetra = globalCurrentSymbol === 1 ? "O" : "X";
+    
+    console.log(`Interpretación: Jugador ${jugadorActual} (${simboloLetra})`);
+    
+    // Remover activo de todos
+    document.querySelectorAll('.player-panel').forEach(panel => {
+        panel.classList.remove('player-active');
+    });
+    
+    // Activar según el símbolo: O = player1Panel, X = player2Panel
+    const activePanelId = globalCurrentSymbol === 1 ? 'player1Panel' : 'player2Panel';
+    console.log(`Activando panel: ${activePanelId}`);
+    
+    const activePanel = document.getElementById(activePanelId);
+    if (activePanel) {
+        activePanel.classList.add('player-active');
+        console.log(`✅ Panel ${activePanelId} activado`);
+    }
+    
+    // Actualizar texto del turno actual
+    document.getElementById('currentPlayer').textContent = `Jugador ${jugadorActual} (${simboloLetra})`;
+}
+
+/* --------------------------------------
+   MOSTRAR PUNTOS (modo 4 jugadores)
+----------------------------------------*/
+function showDots() {
+    if (!isFourPlayerMode) return;
+    
+    document.querySelectorAll('.cell').forEach(cell => {
+        const symbol = parseInt(cell.dataset.symbol);
+        const orientation = parseInt(cell.dataset.orientation || 0);
+        
+        if (symbol !== 0) {
+            const dot = cell.querySelector('.dot-indicator');
+            if (dot) {
+                dot.style.display = 'block';
+                dot.className = 'dot-indicator';
+                dot.classList.add(getOrientationClass(orientation));
+            }
+        }
+    });
+}
+
+function getOrientationClass(orientation) {
+    switch(orientation) {
+        case 0: return 'dot-up';
+        case 1: return 'dot-right';
+        case 2: return 'dot-down';
+        case 3: return 'dot-left';
+        default: return 'dot-up';
+    }
+}
+
+/* --------------------------------------
+   SELECCIÓN Y CLICS
+----------------------------------------*/
+function attachClicks() {
+    console.log("=== attachClicks ===");
+    console.log(`Estado: Jugador ${globalCurrentPlayer}, Símbolo ${globalCurrentSymbol}, Modo ${isFourPlayerMode ? '4J' : '2J'}`);
+    
+    const currentSymbol = globalCurrentSymbol;
+    const firstRound = isFirstRoundGame();
+    
+    console.log(`¿Primera vuelta? ${firstRound}`);
+    
+    // Resetear todos los clics
+    document.querySelectorAll('.cell').forEach(c => {
+        c.onclick = null;
+        c.classList.remove('highlight-selectable', 'highlight-target', 'selected');
+    });
+    
+    // Evaluar cada casilla
+    let selectableCount = 0;
+    document.querySelectorAll('.cell').forEach(cell => {
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+        const symbol = parseInt(cell.dataset.symbol);
+        
+        // Solo casillas del borde son seleccionables
+        const isBorder = (r === 0 || r === 4 || c === 0 || c === 4);
+        if (!isBorder) return;
+        
+        let canTake = false;
+        
+        if (firstRound) {
+            // PRIMERA VUELTA: solo cubos neutros
+            canTake = symbol === 0;
+            if (canTake) {
+                console.log(`  (${r},${c}) - PRIMERA VUELTA - Neutro: SÍ`);
+            }
+        } else {
+            // DESPUÉS DE PRIMERA VUELTA
+            // Puedes tomar: neutros O tus propias fichas
+            canTake = symbol === 0 || symbol === currentSymbol;
+            
+            if (canTake) {
+                const reason = symbol === 0 ? "Neutro" : "Ficha propia";
+                console.log(`  (${r},${c}) - Símbolo: ${symbol}, Current: ${currentSymbol} - ${reason}: SÍ`);
+            } else {
+                console.log(`  (${r},${c}) - Símbolo: ${symbol}, Current: ${currentSymbol} - Ficha contraria: NO`);
+            }
+        }
+        
+        if (canTake) {
+            selectableCount++;
+            cell.classList.add('highlight-selectable');
+            cell.onclick = () => {
+                console.log(`📍 Casilla (${r},${c}) seleccionada - Símbolo: ${symbol}`);
+                handleCubeSelection(r, c, cell);
+            };
+        }
+    });
+    
+    console.log(`Total casillas seleccionables: ${selectableCount}`);
+    console.log("=== Fin attachClicks ===");
+}
+
+function handleCubeSelection(r, c, cellElement) {
+    console.log(`🎯 handleCubeSelection: (${r},${c})`);
+    
+    document.querySelectorAll('.cell').forEach(x => {
+        x.classList.remove('selected', 'highlight-target');
+    });
+    
+    takePos = { row: r, col: c };
+    cellElement.classList.add('selected');
+    
+    highlightInsertTargets(r, c);
+}
+
+function highlightInsertTargets(r, c) {
+    console.log(`🎯 highlightInsertTargets para (${r},${c})`);
+    
+    // Limpiar targets anteriores
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('highlight-target');
+        cell.onclick = null;
+    });
+    
+    // POSIBLES TARGETS según reglas del Quixo:
+    const targets = [];
+    
+    // Misma fila: columnas 0 y 4
+    targets.push({row: r, col: 0});
+    targets.push({row: r, col: 4});
+    
+    // Misma columna: filas 0 y 4  
+    targets.push({row: 0, col: c});
+    targets.push({row: 4, col: c});
+    
+    // Eliminar duplicados y la posición tomada
+    const uniqueTargets = targets.filter((target, index, self) =>
+        index === self.findIndex(t => t.row === target.row && t.col === target.col) &&
+        !(target.row === takePos.row && target.col === takePos.col)
+    );
+    
+    console.log(`Targets disponibles para (${r},${c}):`, uniqueTargets);
+    
+    uniqueTargets.forEach(target => {
+        const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
+        if (targetCell) {
+            targetCell.classList.add('highlight-target');
+            targetCell.onclick = () => {
+                console.log(`🎯 Colocar en (${target.row},${target.col})`);
+                if (isFourPlayerMode) {
+                    showOrientationModal(target.row, target.col);
+                } else {
+                    makeMove(takePos.row, takePos.col, target.row, target.col);
+                }
+                takePos = null;
+            };
+        }
+    });
+}
+
+/* --------------------------------------
+   MODAL DE ORIENTACIÓN
+----------------------------------------*/
+function showOrientationModal(placeR, placeC) {
+    selectedOrientation = null;
+    const modal = document.getElementById('orientationModal');
+    modal.style.display = 'flex';
+    
+    document.querySelectorAll('.orient-btn').forEach(btn => {
+        btn.onclick = function() {
+            selectedOrientation = parseInt(this.dataset.orient);
+            modal.style.display = 'none';
+            makeMove(takePos.row, takePos.col, placeR, placeC, selectedOrientation);
+            takePos = null;
+        };
+    });
+    
+    document.getElementById('cancelOrient').onclick = function() {
+        modal.style.display = 'none';
+        takePos = null;
+        attachClicks();
+    };
+}
+
+/* --------------------------------------
+   MOVIMIENTO - VERSIÓN CORREGIDA
+----------------------------------------*/
+async function makeMove(takeR, takeC, placeR, placeC, orientation = null) {
+    console.log("=== makeMove ===");
+    console.log(`Tomar: (${takeR},${takeC}), Colocar: (${placeR},${placeC}), Orientación: ${orientation}`);
+    
+    const body = {
+        takeRow: takeR,
+        takeCol: takeC,
+        placeRow: placeR,
+        placeCol: placeC,
+        orientation: orientation
+    };
+    
+    try {
+        console.log(`📤 Enviando movimiento...`);
+        const response = await fetch(`/Game/Move?gameId=${currentGameId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        
+        const data = await response.json();
+        console.log("📥 Respuesta del servidor:", data);
+        
+        if (!data.success) {
+            alert('❌ ' + data.message);
+            return;
+        }
+        
+        // ACTUALIZAR VARIABLES
+        globalCurrentSymbol = data.currentSymbol;
+        //globalCurrentPlayer = data.currentPlayer;
+
+        console.log(`🔄 Estado DESPUÉS: Jugador ${globalCurrentPlayer}, Símbolo ${globalCurrentSymbol}`);
+        
+        console.log(`🔄 Estado actualizado:`);
+        console.log(`  - Jugador: ${globalCurrentPlayer}`);
+        console.log(`  - Símbolo: ${globalCurrentSymbol}`);
+        console.log(`  - ¿Juego terminado? ${data.isGameOver}`);
+        console.log(`  - Ganador: ${data.winnerPlayer}`);
+        
+    updatePlayerPanels();
+        if (data.board) {
+            renderBoard(data.board);
+        }
+        
+    
+        
+        // Verificar fin del juego
+        if (data.isGameOver) {
+            gameOver = true;
+            winnerPlayer = data.winnerPlayer;
+            
+            console.log(`🎉 ¡JUEGO TERMINADO!`);
+            console.log(`   Ganador en data: ${data.winnerPlayer}`);
+            console.log(`   Variable winnerPlayer: ${winnerPlayer}`);
+            
+            disableBoard();
+            clearInterval(timerInterval);
+            
+            // Pequeño delay para asegurar que el DOM esté actualizado
+            setTimeout(() => {
+                showWinnerModal();
+            }, 100);
+        } else {
+            // Preparar siguiente turno
+            setTimeout(() => {
+                attachClicks();
+                if (isFourPlayerMode) showDots();
+            }, 100);
+        }
+        
+    } catch (error) {
+        console.error("💥 Error en makeMove:", error);
+        alert('Error: ' + error.message);
+    }
+}
+
+/* --------------------------------------
+   REDIBUJAR TABLERO
+----------------------------------------*/
+function renderBoard(board) {
+    console.log("🎨 renderBoard iniciado");
+    
+    let html = '';
+    for (let r = 0; r < board.length; r++) {
+        const row = board[r];
+        for (let c = 0; c < row.cells.length; c++) {
+            const cell = row.cells[c];
+            
+            let cls = 'neutral';
+            let chr = '-';
+            if (cell.symbol === 1) { cls = 'circle'; chr = 'O'; }
+            if (cell.symbol === 2) { cls = 'cross'; chr = 'X'; }
+            
+            let dotHtml = '';
+            if (cell.symbol !== 0 && isFourPlayerMode) {
+                const dotClass = getOrientationClass(cell.orientation || 0);
+                dotHtml = `<div class="dot-indicator ${dotClass}" style="display: block;"></div>`;
+            }
+            
+            html += `
+                <div class="cell ${cls}"
+                     data-row="${r}"
+                     data-col="${c}"
+                     data-symbol="${cell.symbol}"
+                     data-orientation="${cell.orientation || 0}">
+                     ${chr}
+                     ${dotHtml}
+                </div>
+            `;
+        }
+    }
+    
+    document.getElementById('board').innerHTML = html;
+    
+    if (isFourPlayerMode) {
+        showDots();
+    }
+}
+
+/* --------------------------------------
+   CONTROL DEL JUEGO
+----------------------------------------*/
+function disableBoard() {
+    document.querySelectorAll('.cell').forEach(c => {
+        c.onclick = null;
+        c.style.pointerEvents = 'none';
+        c.classList.remove('highlight-selectable', 'highlight-target', 'selected');
+    });
+}
+
+function showWinnerModal() {
+    console.log("🎮 showWinnerModal llamado");
+    console.log(`  winnerPlayer (de backend): ${winnerPlayer}`);
+    console.log(`  globalCurrentSymbol: ${globalCurrentSymbol}`);
+    
+    const modal = document.getElementById('gameOverModal');
+    const text = document.getElementById('winnerText');
+    
+    if (winnerPlayer > 0) {
+        // winnerPlayer viene del backend como 1 (O) o 2 (X)
+        const simbolo = winnerPlayer === 1 ? 'O' : 'X';
+        const jugadorNumero = winnerPlayer; // 1 para O, 2 para X
+        
+        if (isFourPlayerMode) {
+            // Modo 4J - usar la lógica que ya tenías
+            const team = winnerPlayer === 1 || winnerPlayer === 3 ? 'A' : 'B';
+            text.textContent = `¡Equipo ${team} (Jugador ${jugadorNumero}) ha ganado!`;
+        } else {
+            // Modo 2J - basado solo en el símbolo
+            text.textContent = `¡Jugador ${jugadorNumero} (${simbolo}) ha ganado!`;
+        }
+    } else {
+        text.textContent = 'Partida finalizada';
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function restartGame() {
+    window.location.href = '/Game/Create?mode4players=' + isFourPlayerMode;
+}
+
+function goToHistory() {
+    window.location.href = '/History/Index';
+}
+
+/* --------------------------------------
+   RELOJ DE 7 SEGMENTOS
+----------------------------------------*/
+function initClock() {
+    const digitMap = {
+        0: ['a','b','c','d','e','f'],
+        1: ['b','c'],
+        2: ['a','b','g','e','d'],
+        3: ['a','b','g','c','d'],
+        4: ['f','g','b','c'],
+        5: ['a','f','g','c','d'],
+        6: ['a','f','e','d','c','g'],
+        7: ['a','b','c'],
+        8: ['a','b','c','d','e','f','g'],
+        9: ['a','b','c','d','f','g'],
+    };
+    
+    function initDigit(id) {
+        const digit = document.getElementById(id);
+        ['a','b','c','d','e','f','g'].forEach(seg => {
+            const div = document.createElement('div');
+            div.classList.add(`seg-${seg}`);
+            digit.appendChild(div);
+        });
+    }
+    
+    ['d0','d1','d2','d3','d4','d5'].forEach(initDigit);
+    
+    window.drawDigit = function(id, num) {
+        const digit = document.getElementById(id);
+        const segments = digit.querySelectorAll('div');
+        
+        segments.forEach(seg => seg.classList.remove('seg-on'));
+        if (digitMap[num]) {
+            digitMap[num].forEach(segName => {
+                const segElement = digit.querySelector(`.seg-${segName}`);
+                if (segElement) {
+                    segElement.classList.add('seg-on');
+                }
+            });
+        }
+    };
+}
+
+function startTimer() {
+    // Mostrar 00:00:00 inicialmente
+    drawDigit('d0', 0);
+    drawDigit('d1', 0);
+    drawDigit('d2', 0);
+    drawDigit('d3', 0);
+    drawDigit('d4', 0);
+    drawDigit('d5', 0);
+    
+    timerInterval = setInterval(() => {
+        if (gameOver) return;
+        
+        timerSeconds++;
+        
+        const h = Math.floor(timerSeconds / 3600);
+        const m = Math.floor((timerSeconds % 3600) / 60);
+        const s = timerSeconds % 60;
+        
+        const digits = [
+            Math.floor(h / 10), h % 10,
+            Math.floor(m / 10), m % 10,
+            Math.floor(s / 10), s % 10
+        ];
+        
+        drawDigit('d0', digits[0]);
+        drawDigit('d1', digits[1]);
+        drawDigit('d2', digits[2]);
+        drawDigit('d3', digits[3]);
+        drawDigit('d4', digits[4]);
+        drawDigit('d5', digits[5]);
+    }, 1000);
+}
+</script>

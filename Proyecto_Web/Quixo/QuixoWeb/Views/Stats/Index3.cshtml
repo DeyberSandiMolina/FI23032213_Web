@@ -1,0 +1,241 @@
+@using QuixoWeb.Application.DTOs
+@{
+    ViewData["Title"] = "Estadísticas";
+    var playerStats = ViewBag.PlayerStats as List<PlayerStatsDto> ?? new List<PlayerStatsDto>();
+    var teamStats = ViewBag.TeamStats as List<TeamStatsDto> ?? new List<TeamStatsDto>();
+}
+
+<div class="container mt-4">
+    <h2>Estadísticas</h2>
+    
+    <!-- Estadísticas para 2 jugadores -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Modo para Dos Jugadores</h4>
+        </div>
+        <div class="card-body">
+            @if (playerStats.Any())
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Jugador</th>
+                            <th>Efectividad</th>
+                            <th>Ganadas</th>
+                            <th>Jugadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var stat in playerStats)
+                        {
+                            <tr>
+                                <td>@stat.Name</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                            <div class="progress-bar @(stat.Effectiveness >= 50 ? "bg-success" : "bg-warning")" 
+                                                 style="width: @(Math.Min(100, stat.Effectiveness))%">
+                                            </div>
+                                        </div>
+                                        <span class="fw-bold">@stat.Effectiveness.ToString("F1")%</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-success">@stat.GamesWon</span></td>
+                                <td>@stat.GamesPlayed</td>
+                            </tr>
+                        }
+                    </tbody>
+                    @if (playerStats.Count == 2)
+                    {
+                        <tfoot>
+                            <tr class="table-info">
+                                <td><strong>Total</strong></td>
+                                <td>
+                                    @{
+                                        var totalWins = playerStats.Sum(p => p.GamesWon);
+                                        var totalGames = playerStats.FirstOrDefault()?.GamesPlayed ?? 0;
+                                        var totalEffectiveness = totalGames > 0 ? (totalWins * 100.0) / totalGames : 0;
+                                    }
+                                    <strong>@totalEffectiveness.ToString("F1")%</strong>
+                                </td>
+                                <td><strong>@totalWins</strong></td>
+                                <td><strong>@totalGames</strong></td>
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+                
+                <!-- Resumen -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Resumen</h6>
+                                <p><strong>Total partidas:</strong> @(playerStats.FirstOrDefault()?.GamesPlayed ?? 0)</p>
+                                <p><strong>Partidas con ganador:</strong> @playerStats.Sum(p => p.GamesWon)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Distribución</h6>
+                                @if (playerStats.Count == 2)
+                                {
+                                    var player1 = playerStats.FirstOrDefault(p => p.PlayerId == 1);
+                                    var player2 = playerStats.FirstOrDefault(p => p.PlayerId == 2);
+                                    
+                                    if (player1 != null && player2 != null)
+                                    {
+                                        <p><strong>Jugador 1 (O):</strong> @player1.GamesWon victorias</p>
+                                        <p><strong>Jugador 2 (X):</strong> @player2.GamesWon victorias</p>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay partidas de 2 jugadores finalizadas todavía.
+                    <a href="/Game/Create" class="alert-link">Juega una partida nueva</a>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <!-- Estadísticas para 4 jugadores -->
+    <div class="card">
+        <div class="card-header">
+            <h4>Modo para Cuatro Jugadores (Equipos)</h4>
+        </div>
+        <div class="card-body">
+            @if (teamStats.Any())
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Efectividad</th>
+                            <th>Ganadas</th>
+                            <th>Jugadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var stat in teamStats)
+                        {
+                            <tr>
+                                <td>@stat.Name</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                            <div class="progress-bar @(stat.Effectiveness >= 50 ? "bg-primary" : "bg-info")" 
+                                                 style="width: @(Math.Min(100, stat.Effectiveness))%">
+                                            </div>
+                                        </div>
+                                        <span class="fw-bold">@stat.Effectiveness.ToString("F1")%</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary">@stat.GamesWon</span></td>
+                                <td>@stat.GamesPlayed</td>
+                            </tr>
+                        }
+                    </tbody>
+                    @if (teamStats.Count == 2)
+                    {
+                        <tfoot>
+                            <tr class="table-info">
+                                <td><strong>Total</strong></td>
+                                <td>
+                                    @{
+                                        var teamTotalWins = teamStats.Sum(t => t.GamesWon);
+                                        var teamTotalGames = teamStats.FirstOrDefault()?.GamesPlayed ?? 0;
+                                        var teamTotalEffectiveness = teamTotalGames > 0 ? (teamTotalWins * 100.0) / teamTotalGames : 0;
+                                    }
+                                    <strong>@teamTotalEffectiveness.ToString("F1")%</strong>
+                                </td>
+                                <td><strong>@teamTotalWins</strong></td>
+                                <td><strong>@teamTotalGames</strong></td>
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+                
+                <!-- Resumen equipos -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Composición de equipos</h6>
+                                <p><strong>Equipo A:</strong> Jugadores 1 y 3 (O)</p>
+                                <p><strong>Equipo B:</strong> Jugadores 2 y 4 (X)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Resumen equipos</h6>
+                                <p><strong>Total partidas:</strong> @(teamStats.FirstOrDefault()?.GamesPlayed ?? 0)</p>
+                                <p><strong>Partidas con ganador:</strong> @teamStats.Sum(t => t.GamesWon)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay partidas de 4 jugadores finalizadas todavía.
+                    <a href="/Game/Create?mode4players=true" class="alert-link">Juega una partida de 4 jugadores</a>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <!-- Información general -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Información General</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card text-white bg-success mb-3">
+                        <div class="card-body text-center">
+                            <h6>Total Partidas</h6>
+                            <h3>@(playerStats.FirstOrDefault()?.GamesPlayed + teamStats.FirstOrDefault()?.GamesPlayed ?? 0)</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-primary mb-3">
+                        <div class="card-body text-center">
+                            <h6>2 Jugadores</h6>
+                            <h3>@(playerStats.FirstOrDefault()?.GamesPlayed ?? 0)</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-info mb-3">
+                        <div class="card-body text-center">
+                            <h6>4 Jugadores</h6>
+                            <h3>@(teamStats.FirstOrDefault()?.GamesPlayed ?? 0)</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .progress-bar {
+        transition: width 0.5s ease-in-out;
+    }
+    .table th {
+        background-color: #f8f9fa;
+    }
+</style>

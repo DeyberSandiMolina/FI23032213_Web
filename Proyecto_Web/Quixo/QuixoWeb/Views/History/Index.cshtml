@@ -1,0 +1,97 @@
+@model List<QuixoWeb.Models.Game>
+@{
+    ViewData["Title"] = "Historial de Partidas";
+}
+
+<div class="container mt-4">
+    <h2>Partidas Finalizadas</h2>
+    
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Modo</th>
+                <th>Fecha/Hora</th>
+                <th>Duración</th>
+                <th>Ganador</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var game in Model)
+            {
+                <tr>
+                    <td>@game.GameId</td>
+                    <td>@(game.Mode == 4 ? "4 Jugadores" : "2 Jugadores")</td>
+                    <td>@game.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@game.TotalTime.ToString(@"hh\:mm\:ss")</td>
+                    <td>
+                        @if (game.WinnerPlayerId.HasValue)
+                        {
+                            @if (game.Mode == 4) @* Modo 4 jugadores *@
+                            {
+                                @if (game.WinnerPlayerId == 1 || game.WinnerPlayerId == 3)
+                                {
+                                    <span>Equipo A (Jugador @game.WinnerPlayerId)</span>
+                                }
+                                else if (game.WinnerPlayerId == 2 || game.WinnerPlayerId == 4)
+                                {
+                                    <span>Equipo B (Jugador @game.WinnerPlayerId)</span>
+                                }
+                                else
+                                {
+                                    <span>Equipo Desconocido (Jugador @game.WinnerPlayerId)</span>
+                                }
+                            }
+                            else @* Modo 2 jugadores *@
+                            {
+                                @if (game.WinnerPlayerId == 1)
+                                {
+                                    <span>Jugador 1 (O)</span>
+                                }
+                                else if (game.WinnerPlayerId == 2)
+                                {
+                                    <span>Jugador 2 (X)</span>
+                                }
+                                else
+                                {
+                                    <span>Jugador @game.WinnerPlayerId</span>
+                                }
+                            }
+                        }
+                        else if (game.WinnerTeamId.HasValue)
+                        {
+                            @if (game.WinnerTeamId == 1)
+                            {
+                                <span>Equipo A</span>
+                            }
+                            else if (game.WinnerTeamId == 2)
+                            {
+                                <span>Equipo B</span>
+                            }
+                            else
+                            {
+                                <span>Equipo @game.WinnerTeamId</span>
+                            }
+                        }
+                        else
+                        {
+                            <span>Sin ganador</span>
+                        }
+                    </td>
+                    <td>
+                        <a href="/History/ViewGame/@game.GameId" class="btn btn-sm btn-info">
+                            Ver
+                        </a>
+                        <form method="post" action="/History/Export/@game.GameId" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-success">
+                                Exportar XML
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

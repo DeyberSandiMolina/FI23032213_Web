@@ -1,0 +1,297 @@
+@model QuixoWeb.Application.DTOs.GameStateDto
+@{
+    ViewData["Title"] = "Historial de Partida";
+    var gameId = ViewBag.GameId;
+    var gameStates = ViewBag.GameStates as List<QuixoWeb.Application.DTOs.GameStateDto>;
+    var currentIndex = ViewBag.CurrentStateIndex;
+    var totalStates = ViewBag.TotalStates;
+    var isFourPlayerMode = ViewBag.IsFourPlayerMode ?? false;
+    var currentMove = ViewBag.CurrentMove as QuixoWeb.Models.Move;
+    var game = ViewBag.Game as QuixoWeb.Models.Game;
+}
+
+<div class="container mt-4">
+    <h2>Historial de Partida #@gameId</h2>
+    
+    <!-- Controles de navegación -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5>Turno: @currentIndex/@(totalStates-1)</h5>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: @((currentIndex * 100) / Math.Max(1, totalStates-1))%"></div>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group" role="group">
+                        <a href="/History/ViewGameState/@gameId?stateIndex=0" 
+                           class="btn btn-secondary @(currentIndex == 0 ? "disabled" : "")">
+                            <i class="bi bi-skip-backward"></i> Inicio
+                        </a>
+                        <a href="/History/ViewGameState/@gameId?stateIndex=@(currentIndex-1)" 
+                           class="btn btn-primary @(currentIndex == 0 ? "disabled" : "")">
+                            <i class="bi bi-arrow-left"></i> Anterior
+                        </a>
+                        <span class="btn btn-light">Turno @currentIndex</span>
+                        <a href="/History/ViewGameState/@gameId?stateIndex=@(currentIndex+1)" 
+                           class="btn btn-primary @(currentIndex >= totalStates-1 ? "disabled" : "")">
+                            Siguiente <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/History/ViewGameState/@gameId?stateIndex=@(totalStates-1)" 
+                           class="btn btn-secondary @(currentIndex >= totalStates-1 ? "disabled" : "")">
+                            Final <i class="bi bi-skip-forward"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información del turno actual -->
+            @if (currentIndex > 0 && currentMove != null)
+            {
+                <div class="mt-3">
+                    <p>
+                        <strong>Movimiento @currentIndex:</strong> 
+                        (@currentMove.CubeTakenRow,@currentMove.CubeTakenCol) → 
+                        (@currentMove.CubePlacedRow,@currentMove.CubePlacedCol)
+                        @if (currentMove.DotDirection.HasValue)
+                        {
+                            <span> • Orientación: @GetOrientationName(currentMove.DotDirection.Value)</span>
+                        }
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <!-- Reloj de 7 segmentos -->
+    <div class="seven-seg-clock mb-4" style="display: flex; justify-content: center; align-items: center; gap: 6px; margin: 15px auto;">
+        @if (game != null)
+        {
+            <div class="digit" id="d0"></div>
+            <div class="digit" id="d1"></div>
+            <div class="separator" style="font-size: 40px; color: #3aff00; margin: 0 4px;">:</div>
+            <div class="digit" id="d2"></div>
+            <div class="digit" id="d3"></div>
+            <div class="separator" style="font-size: 40px; color: #3aff00; margin: 0 4px;">:</div>
+            <div class="digit" id="d4"></div>
+            <div class="digit" id="d5"></div>
+        }
+    </div>
+    
+    <!-- Tablero -->
+    <div class="board-container">
+        @if (isFourPlayerMode)
+        {
+            <!-- Layout 4 jugadores (simplificado) -->
+            <div class="text-center">
+                <p class="text-warning">Modo 4 jugadores - Vista simplificada</p>
+                <div class="board" style="display: grid; grid-template-columns: repeat(5, 60px); gap: 5px; margin: 20px auto;">
+                    @for (int r = 0; r < Model.Board.Count; r++)
+                    {
+                        var row = Model.Board[r];
+                        for (int c = 0; c < row.Cells.Count; c++)
+                        {
+                            var cell = row.Cells[c];
+                            string cssClass = cell.Symbol switch { 1 => "circle", 2 => "cross", _ => "neutral" };
+                            string chr = cell.Symbol switch { 1 => "O", 2 => "X", _ => "-" };
+                            
+                            <div class="cell @cssClass" style="width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; border: 1px solid #ccc; font-size: 24px;">
+                                @chr
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Layout 2 jugadores -->
+            <div class="two-players-container" style="max-width: 500px; margin: 0 auto;">
+                <div id="player1Panel" class="player-panel mb-3 @(Model.CurrentPlayer == 1 ? "player-active" : "")" 
+                     style="font-size: 18px; font-weight: bold; text-align: center; padding: 10px; border-radius: 10px; border: 3px solid @(Model.CurrentPlayer == 1 ? "#28a745" : "transparent"); background: @(Model.CurrentPlayer == 1 ? "#eaffea" : "#f2f2f2");">
+                    Jugador 1 — O
+                </div>
+                
+                <div class="panel text-center mb-2">
+                    <strong>Turno @currentIndex:</strong>
+                    <span>Jugador @Model.CurrentPlayer (@(Model.CurrentSymbol == 1 ? "O" : "X"))</span>
+                </div>
+                
+                <div class="board" style="display: grid; grid-template-columns: repeat(5, 70px); grid-template-rows: repeat(5, 70px); gap: 6px; margin: 20px auto;">
+                    @for (int r = 0; r < Model.Board.Count; r++)
+                    {
+                        var row = Model.Board[r];
+                        for (int c = 0; c < row.Cells.Count; c++)
+                        {
+                            var cell = row.Cells[c];
+                            string cssClass = cell.Symbol switch { 1 => "circle", 2 => "cross", _ => "neutral" };
+                            string chr = cell.Symbol switch { 1 => "O", 2 => "X", _ => "-" };
+                            string color = cell.Symbol switch { 1 => "#007bff", 2 => "#d9534f", _ => "#999" };
+                            
+                            <div class="cell @cssClass" style="width: 70px; height: 70px; background: #f5f5f5; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 32px; font-weight: bold; color: @color;">
+                                @chr
+                            </div>
+                        }
+                    }
+                </div>
+                
+                <div id="player2Panel" class="player-panel mt-3 @(Model.CurrentPlayer == 2 ? "player-active" : "")"
+                     style="font-size: 18px; font-weight: bold; text-align: center; padding: 10px; border-radius: 10px; border: 3px solid @(Model.CurrentPlayer == 2 ? "#28a745" : "transparent"); background: @(Model.CurrentPlayer == 2 ? "#eaffea" : "#f2f2f2");">
+                    Jugador 2 — X
+                </div>
+            </div>
+        }
+    </div>
+    
+    <!-- Información del juego -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5>Información del Juego</h5>
+            <p><strong>Estado:</strong> 
+                @if (Model.IsGameOver)
+                {
+                    <span class="text-success">
+                        @if (Model.WinnerPlayer.HasValue)
+                        {
+                            <span>¡Jugador @Model.WinnerPlayer (@(Model.WinnerPlayer == 1 ? "O" : "X")) ganó!</span>
+                        }
+                        else
+                        {
+                            <span>Partida finalizada</span>
+                        }
+                    </span>
+                }
+                else
+                {
+                    <span class="text-primary">En progreso...</span>
+                }
+            </p>
+            <p><strong>Turno actual:</strong> @Model.TurnNumber</p>
+            @if (game != null)
+            {
+                <p><strong>Duración total:</strong> @game.TotalTime.ToString(@"hh\:mm\:ss")</p>
+                <p><strong>Fecha:</strong> @game.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</p>
+            }
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <a href="/History/Index" class="btn btn-secondary">Volver al Historial</a>
+    </div>
+</div>
+
+@if (game != null)
+{
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar reloj
+        initClock();
+        
+        // Calcular tiempo para este turno
+        var totalDuration = @((int)(game.TotalTime.TotalSeconds));
+        var currentTurn = @currentIndex;
+        var totalTurns = @totalStates;
+        
+        var turnTimeSeconds = 0;
+        if (totalTurns > 1 && totalDuration > 0) {
+            turnTimeSeconds = Math.floor(totalDuration * currentTurn / (totalTurns - 1));
+        }
+        
+        updateClock(turnTimeSeconds);
+        
+        function initClock() {
+            const digitMap = {
+                0: ['a','b','c','d','e','f'],
+                1: ['b','c'],
+                2: ['a','b','g','e','d'],
+                3: ['a','b','g','c','d'],
+                4: ['f','g','b','c'],
+                5: ['a','f','g','c','d'],
+                6: ['a','f','e','d','c','g'],
+                7: ['a','b','c'],
+                8: ['a','b','c','d','e','f','g'],
+                9: ['a','b','c','d','f','g'],
+            };
+            
+            function initDigit(id) {
+                const digit = document.getElementById(id);
+                if (!digit) return;
+                
+                digit.style.position = 'relative';
+                digit.style.width = '28px';
+                digit.style.height = '50px';
+                
+                ['a','b','c','d','e','f','g'].forEach(seg => {
+                    const div = document.createElement('div');
+                    div.style.position = 'absolute';
+                    div.style.background = '#222';
+                    div.style.transition = 'background 0.2s';
+                    
+                    switch(seg) {
+                        case 'a': div.style.top = '0'; div.style.left = '4px'; div.style.width = '20px'; div.style.height = '6px'; break;
+                        case 'b': div.style.top = '4px'; div.style.right = '0'; div.style.width = '6px'; div.style.height = '20px'; break;
+                        case 'c': div.style.bottom = '4px'; div.style.right = '0'; div.style.width = '6px'; div.style.height = '20px'; break;
+                        case 'd': div.style.bottom = '0'; div.style.left = '4px'; div.style.width = '20px'; div.style.height = '6px'; break;
+                        case 'e': div.style.bottom = '4px'; div.style.left = '0'; div.style.width = '6px'; div.style.height = '20px'; break;
+                        case 'f': div.style.top = '4px'; div.style.left = '0'; div.style.width = '6px'; div.style.height = '20px'; break;
+                        case 'g': div.style.top = '22px'; div.style.left = '4px'; div.style.width = '20px'; div.style.height = '6px'; break;
+                    }
+                    
+                    div.classList.add(`seg-${seg}`);
+                    digit.appendChild(div);
+                });
+            }
+            
+            ['d0','d1','d2','d3','d4','d5'].forEach(initDigit);
+            
+            window.drawDigit = function(id, num) {
+                const digit = document.getElementById(id);
+                if (!digit) return;
+                
+                const segments = digit.querySelectorAll('div');
+                segments.forEach(seg => seg.style.background = '#222');
+                
+                if (digitMap[num]) {
+                    digitMap[num].forEach(segName => {
+                        const segElement = digit.querySelector(`.seg-${segName}`);
+                        if (segElement) {
+                            segElement.style.background = '#3aff00';
+                        }
+                    });
+                }
+            };
+        }
+        
+        function updateClock(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            
+            const digits = [
+                Math.floor(h / 10), h % 10,
+                Math.floor(m / 10), m % 10,
+                Math.floor(s / 10), s % 10
+            ];
+            
+            ['d0','d1','d2','d3','d4','d5'].forEach((id, index) => {
+                drawDigit(id, digits[index]);
+            });
+        }
+    });
+    </script>
+}
+
+@functions {
+    private string GetOrientationName(int orientation)
+    {
+        return orientation switch
+        {
+            0 => "Arriba",
+            1 => "Derecha",
+            2 => "Abajo",
+            3 => "Izquierda",
+            _ => "Desconocida"
+        };
+    }
+}

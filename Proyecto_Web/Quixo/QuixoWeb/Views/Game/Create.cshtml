@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Nueva Partida";
+}
+
+<style>
+    .create-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 40px;
+    }
+
+    .title {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 30px;
+    }
+
+    .mode-buttons {
+        display: flex;
+        gap: 30px;
+    }
+
+    .mode-btn {
+        padding: 20px 40px;
+        background: #007bff;
+        color: white;
+        font-size: 22px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.2s;
+        font-weight: bold;
+    }
+
+    .mode-btn:hover {
+        background: #0056b3;
+        transform: scale(1.05);
+    }
+</style>
+
+<div class="create-container">
+    <div class="title">Selecciona modalidad</div>
+
+    <div class="mode-buttons">
+        <!-- Modo normal: 2 jugadores -->
+        <a href="/Game/Create?mode4players=false">
+            <button class="mode-btn">2 Jugadores</button>
+        </a>
+
+        <!-- Modo 4 jugadores -->
+        <a href="/Game/Create?mode4players=true">
+            <button class="mode-btn">4 Jugadores</button>
+        </a>
+    </div>
+</div>
