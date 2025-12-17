@@ -168,7 +168,7 @@ namespace QuixoWeb.Application.Services
         }
 
         // ----------------------------------------------------------------------------------------
-        // REALIZAR MOVIMIENTO - VERSIÓN CORREGIDA (SIN ERROR DE VARIABLE DUPLICADA)
+        // REALIZAR MOVIMIENTO 
         // ----------------------------------------------------------------------------------------
         public async Task<MoveResponseDto> MakeMoveAsync(int gameId, MoveRequestDto request)
         {

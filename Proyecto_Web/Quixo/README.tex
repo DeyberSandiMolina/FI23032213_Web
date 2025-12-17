@@ -161,7 +161,7 @@ Usuario Git & DeyberSandiMolina \\
     \scriptsize CreatedAt
 };
 
-% ========== RELACIONES CORREGIDAS ==========
+% ========== RELACIONES ==========
 % Game → Players (1:N)
 \draw[->, thick, blue] (games.south west) -- node[left, font=\scriptsize, pos=0.7] {1} (players.north);
 \draw[<-, thick, blue] (players.north) -- node[right, font=\scriptsize, pos=0.3] {N} (games.south west);
@@ -275,7 +275,7 @@ CreatedAt & DATETIME & NOT NULL & Fecha y hora del estado \\
 \hline
 \end{tabular}
 
-\subsection*{Relaciones y Cardinalidades Corregidas}
+\subsection*{Relaciones y Cardinalidades}
 
 \begin{itemize}
     \item \textbf{Games → Players (1:N):} Un juego tiene múltiples jugadores (2 o 4)
