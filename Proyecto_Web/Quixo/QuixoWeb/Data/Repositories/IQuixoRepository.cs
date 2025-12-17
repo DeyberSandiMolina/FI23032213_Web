@@ -4,8 +4,8 @@ namespace QuixoWeb.Data.Repositories
 {
     public interface IQuixoRepository
     {
-        Task<List<Move>> GetMovesByGameIdAsync(int gameId); // Agregar este
-        Task<Move?> GetMoveByTurnAsync(int gameId, int turnNumber); // Agregar este
+        Task<List<Move>> GetMovesByGameIdAsync(int gameId); 
+        Task<Move?> GetMoveByTurnAsync(int gameId, int turnNumber); 
         // Crea un juego nuevo y devuelve la entidad (con id)
         Task<Game> CreateGameAsync(Game game, CancellationToken ct = default);
 

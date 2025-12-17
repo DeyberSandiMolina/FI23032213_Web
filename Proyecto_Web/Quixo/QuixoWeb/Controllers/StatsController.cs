@@ -46,7 +46,7 @@ namespace QuixoWeb.Controllers
             // Contar victorias por jugador
             var playerWins = games
                 .Where(g => g.WinnerPlayerId.HasValue)
-                .GroupBy(g => g.WinnerPlayerId!.Value) // ¡Agregar ! aquí
+                .GroupBy(g => g.WinnerPlayerId!.Value) 
                 .ToDictionary(g => g.Key, g => g.Count());
             
             // Jugador 1
@@ -80,7 +80,7 @@ namespace QuixoWeb.Controllers
             // Contar victorias por equipo
             var teamWins = games
                 .Where(g => g.WinnerTeamId.HasValue)
-                .GroupBy(g => g.WinnerTeamId!.Value) // ¡Agregar ! aquí
+                .GroupBy(g => g.WinnerTeamId!.Value) 
                 .ToDictionary(g => g.Key, g => g.Count());
             
             // Equipo A
